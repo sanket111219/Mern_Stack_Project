@@ -180,14 +180,14 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   if (!incomingRefreshToken) {
     throw new ApiError(401, "unauthorized access");
   }
-
+  console.log(incomingRefreshToken);
   try {
     const decodedRefreshToken = jwt.verify(
       incomingRefreshToken,
       process.env.REFRESH_TOKEN_SECRET
     );
 
-    const user = User.findById(decodedRefreshToken?._id);
+    const user = await User.findById(decodedRefreshToken?._id);
     if (!user) {
       throw new ApiError(401, "Invalid RefreshToken");
     }
@@ -200,20 +200,21 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       httpOnly: true,
       // secure: true,
     };
-
-    const { accessToken, newrefreshToken } =
+    // console.log(user);
+    const { accessToken, refreshToken } =
       await generateAccessAndRefreshTokens(user._id);
 
+    // console.log(refreshToken);
     return res
       .status(200)
       .cookie("accessToken", accessToken, options)
-      .cookie("refreshToken", newrefreshToken, options)
+      .cookie("refreshToken", refreshToken, options)
       .json(
         new ApiResponse(
           200,
           {
             accessToken,
-            refreshToken: newrefreshToken,
+            refreshToken: refreshToken,
           },
           "Access token refreshed"
         )
@@ -242,6 +243,7 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
 });
 
 const getCurrentUser = asyncHandler(async (req, res) => {
+  console.log("hello")
   return res
     .status(200)
     .json(new ApiResponse(200, req.user, "current user fetched successfully"));
@@ -438,14 +440,14 @@ const getWatchHistory = asyncHandler(async (req, res) => {
   ]);
 
   return res
-  .status(200)
-  .json(
-    new ApiResponse(
-      200,
-      user[0].watchHistory,
-      "Watch history fetched successfully"
-    )
-  )
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        user[0].watchHistory,
+        "Watch history fetched successfully"
+      )
+    );
 });
 
 export {
@@ -458,7 +460,6 @@ export {
   updateAccountDetails,
   updateUserAvatar,
   updateUserCoverImage,
-  getCurrentUser,
   getUserChannelProfile,
   getWatchHistory,
 };

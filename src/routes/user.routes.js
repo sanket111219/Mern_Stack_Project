@@ -47,5 +47,5 @@ router
   .patch(verifyJwt, upload.single("coverImage"), updateUserCoverImage);
 
 router.route("/c/:username").get(verifyJwt, getUserChannelProfile);
-router.route("/watchHistory").get(verifyJwt, getWatchHistory);
+router.route("/watch-history").get(verifyJwt, getWatchHistory);
 export default router;
