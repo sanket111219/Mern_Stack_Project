@@ -1,7 +1,7 @@
 import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 import mongoose, { Schema } from "mongoose";
 
-const dcommentSchema = new Schema(
+const commentSchema = new Schema(
   {
     content: {
       type: String,
