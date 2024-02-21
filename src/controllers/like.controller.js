@@ -54,7 +54,7 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
     } else {
       const newLike = await Like.create({
         likedBy,
-        comment: likedComment,
+        comment: commentId,
       });
 
       return res
