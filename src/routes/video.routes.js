@@ -12,31 +12,30 @@ import {
 
 const router = Router();
 
-router.route("/get-videos").get(getAllVideos);
-router.route("/get-video-by-id/:videoId").get(getVideoById);
-
-//secure routes
-
 router
-  .route("/toggle-publish-status/:videoId")
-  .patch(verifyJwt, togglePublishStatus);
-router.route("/delete-video/:videoId").delete(verifyJwt, deleteVideo);
-router
-  .route("/update-video/:videoId")
+  .route("/:videoId")
+  .get(getVideoById)
+  .delete(verifyJwt, deleteVideo)
   .patch(verifyJwt, upload.single("thumbnail"), updateVideo);
-router.route("/publish-video").post(
-  verifyJwt,
-  upload.fields([
-    {
-      name: "video",
-      maxCount: 1,
-    },
-    {
-      name: "thumbnail",
-      maxCount: 1,
-    },
-  ]),
-  publishAVideo
-);
+
+router.route("/toggle/publish/:videoId").patch(verifyJwt, togglePublishStatus);
+
+router
+  .route("/")
+  .get(getAllVideos)
+  .post(
+    verifyJwt,
+    upload.fields([
+      {
+        name: "video",
+        maxCount: 1,
+      },
+      {
+        name: "thumbnail",
+        maxCount: 1,
+      },
+    ]),
+    publishAVideo
+  );
 
 export default router;
