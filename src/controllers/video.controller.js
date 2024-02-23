@@ -7,13 +7,66 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import uploadOnCloudinary from "../utils/fileUpload.js";
 
 const getAllVideos = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
+  const {
+    page = 1,
+    limit = 10,
+    query,
+    sortBy = "duration",
+    sortType = "desc",
+    userId,
+  } = req.query;
   //TODO: get all videos based on query, sort, pagination
   if (!query && !userId) {
     throw new ApiError(
       400,
       "search keyword is not provided or userId not provided"
     );
+  }
+  let videoQuery = {};
+  if (query && !userId) {
+    videoQuery.$match = {
+      $or: [
+        {
+          title: {
+            $regex: query,
+            $options: "i",
+          },
+        },
+        {
+          description: {
+            $regex: query,
+            $options: "i",
+          },
+        },
+      ],
+      isPublished: true,
+    };
+  } else if (userId && !query) {
+    videoQuery.$match = {
+      owner: new mongoose.Types.ObjectId(userId),
+      isPublished: true,
+    };
+  } else if (query && userId) {
+    videoQuery.$match = {
+      $or: [
+        {
+          title: {
+            $regex: query,
+            $options: "i",
+          },
+        },
+        {
+          description: {
+            $regex: query,
+            $options: "i",
+          },
+        },
+      ],
+      owner: new mongoose.Types.ObjectId(userId),
+      isPublished: true,
+    };
+  } else {
+    matchStage["$match"] = {};
   }
 
   const options = {
@@ -28,16 +81,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
   }
 
   const aggregateModel = Video.aggregate([
-    {
-      $match: {
-        $or: [
-          { title: { $regex: query, $options: "i" } },
-          { description: { $regex: query, $options: "i" } },
-          { userId: new mongoose.Types.ObjectId(userId) },
-        ],
-        isPublished: true,
-      },
-    },
+    videoQuery,
     {
       $lookup: {
         from: "users",
