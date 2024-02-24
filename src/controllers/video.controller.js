@@ -1,6 +1,6 @@
 import mongoose, { isValidObjectId } from "mongoose";
 import { Video } from "../models/video.model.js";
-import { User } from "../models/user.model.js";
+import { WatchHistory } from "../models/watchHistory.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -174,15 +174,32 @@ const publishAVideo = asyncHandler(async (req, res) => {
 const getVideoById = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
   //TODO: get video by id
+
   if (!isValidObjectId(videoId)) {
     throw new ApiError(400, "Invalid video id");
   }
 
+  const watchedVideo = await WatchHistory.findOne({
+    video: videoId,
+    owner: req.user._id,
+  });
+
+  if (!watchedVideo) {
+    await WatchHistory.create({
+      video: videoId,
+      owner: req.user._id,
+    });
+  } else {
+    await WatchHistory.findByIdAndUpdate(watchedVideo._id, {
+      watchedAt: Date.now(),
+    });
+  }
+  
   const videoUpdate = await Video.findByIdAndUpdate(videoId, {
     $inc: { views: 1 },
   });
 
-  if(!videoUpdate) throw new ApiError(500, "Error in updating video views");
+  if (!videoUpdate) throw new ApiError(500, "Error in updating video views");
   const video = await Video.aggregate([
     {
       $match: {
@@ -238,7 +255,16 @@ const getVideoById = asyncHandler(async (req, res) => {
         localField: "_id",
         foreignField: "video",
         as: "likes",
-      }
+        pipeline: [
+          {
+            $project: {
+              _id: 1,
+              video: 1,
+              likedBy: 1,
+            },
+          },
+        ],
+      },
     },
     {
       $addFields: {

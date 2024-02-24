@@ -14,7 +14,7 @@ const router = Router();
 
 router
   .route("/:videoId")
-  .get(getVideoById)
+  .get(verifyJwt, getVideoById)
   .delete(verifyJwt, deleteVideo)
   .patch(verifyJwt, upload.single("thumbnail"), updateVideo);
 
